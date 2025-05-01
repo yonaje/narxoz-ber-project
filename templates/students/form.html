@@ -1,0 +1,60 @@
+
+{% extends 'base.html' %}
+
+{% set action = "Edit" if form.email.data else "Add" %}
+
+{% block title %}{{ action }} Student{% endblock %}
+
+{% block content %}
+  <h3>{{ action }} Student</h3>
+  <hr> {# Add a separator #}
+
+  <form method="post">
+    {{ form.hidden_tag() }} {# CSRF token #}
+
+    {# First Name Field #}
+    <div class="mb-3">
+      {{ form.first_name.label(class="form-label") }}
+      {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else ""), placeholder="Enter first name") }}
+      {% if form.first_name.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.first_name.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# Last Name Field #}
+    <div class="mb-3">
+      {{ form.last_name.label(class="form-label") }}
+      {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else ""), placeholder="Enter last name") }}
+      {% if form.last_name.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.last_name.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# Email Field #}
+    <div class="mb-3">
+      {{ form.email.label(class="form-label") }}
+      {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="Enter email address") }}
+      {% if form.email.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.email.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# Submit Button #}
+    <div class="d-flex justify-content-end mt-4"> 
+        <a href="{{ url_for('students.list') }}" class="btn btn-secondary me-2">Cancel</a>
+        {{ form.submit(class="btn btn-primary", value=action + " Student") }} 
+    </div>
+  </form>
+{% endblock %}
