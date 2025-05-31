@@ -1,0 +1,68 @@
+
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Course{% endblock %}
+
+{% block content %}
+  <h3>{{ action }} Course</h3>
+  <hr>
+
+  <form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+      {{ form.title.label(class="form-label") }}
+      {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="Enter course title") }}
+      {% if form.title.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.title.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="form-text">
+           Max file size: 25MB. Allowed types: txt, pdf, mp3, mp4.
+           <br><em>If a PDF is uploaded, a summary will be automatically generated.</em>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      {{ form.start_date.label(class="form-label") }}
+      {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else "")) }}
+       {% if form.start_date.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.start_date.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+
+    <div class="mb-3">
+      {{ form.material.label(class="form-label") }}
+      {% if action == 'Edit' and current_material %}
+        <div class="mb-2">
+            <span class="text-muted small">Current file: {{ current_material }}</span>
+            <a href="{{ url_for('uploaded_file', filename=current_material) }}" target="_blank" class="ms-2 small">(View/Download)</a>
+        </div>
+        <span class="form-text text-muted">Upload a new file to replace the current one (optional).</span>
+      {% endif %}
+
+      {{ form.material(class="form-control" + (" is-invalid" if form.material.errors else "")) }}
+       {% if form.material.errors %}
+        <div class="invalid-feedback">
+          {% for error in form.material.errors %}
+            <span>{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+       <div class="form-text">Max file size: 25MB. Allowed types: txt, pdf, mp3, mp4.</div> 
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+        <a href="{{ url_for('courses.list') }}" class="btn btn-secondary me-2">Cancel</a>
+        {{ form.submit(class="btn btn-primary", value=action + " Course") }} 
+    </div>
+  </form>
+{% endblock %}

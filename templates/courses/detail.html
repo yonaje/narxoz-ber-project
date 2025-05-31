@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Course: {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <h3>{{ course.title }}</h3>
+
+        {% if course.creator %}
+            <p class="text-muted mb-1"><small><em>Created by: {{ course.creator.username }}</em></small></p>
+        {% endif %}
+
+        <p><strong>Start Date:</strong> {{ course.start_date.strftime('%Y-%m-%d') if course.start_date else 'N/A' }}</p>
+
+        <h4>Material</h4>
+        <div class="mb-3">
+            {% if course.material_path %}
+                {% set file_url = url_for('uploaded_file', filename=course.material_path) %}
+                {% set ext = course.material_path.lower().split('.')[-1] %}
+                {% if ext in ['pdf', 'txt'] %}
+                    <a href="{{ file_url }}" target="_blank" class="btn btn-sm btn-outline-info me-2">View Document</a>
+                    <a href="{{ file_url }}" download class="btn btn-sm btn-outline-secondary">Download</a>
+                {% elif ext == 'mp3' %}
+                    <audio controls src="{{ file_url }}" style="max-width: 100%; height: 40px;"></audio><br>
+                    <a href="{{ file_url }}" download class="btn btn-sm btn-outline-secondary mt-1">Download MP3</a>
+                {% elif ext == 'mp4' %}
+                    <div class="ratio ratio-16x9" style="max-width: 480px;">
+                         <video controls src="{{ file_url }}"></video>
+                    </div>
+                    <a href="{{ file_url }}" download class="btn btn-sm btn-outline-secondary mt-1">Download MP4</a>
+                {% else %}
+                    <a href="{{ file_url }}" download class="btn btn-sm btn-outline-primary">Download {{ course.material_path }}</a>
+                {% endif %}
+                
+            {# --- ADD SUMMARY BUTTON AND MODAL --- #}
+                {% if course.material_path.lower().endswith('.pdf') %}
+                    <button type="button" class="btn btn-sm btn-info ms-2" data-bs-toggle="modal" data-bs-target="#summaryModal-{{ course.id }}">
+                        <i class="fas fa-file-alt me-1"></i> View Summary
+                    </button>
+
+                    <!-- Summary Modal -->
+                    <div class="modal fade" id="summaryModal-{{ course.id }}" tabindex="-1" aria-labelledby="summaryModalLabel-{{ course.id }}" aria-hidden="true">
+                      <div class="modal-dialog modal-lg modal-dialog-scrollable"> {# Added modal-dialog-scrollable #}
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="summaryModalLabel-{{ course.id }}">Summary for: {{ course.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            {% if course.material_summary %}
+                              {% if course.material_summary.startswith("Error:") %}
+                                <div class="alert alert-warning" role="alert">
+                                  {{ course.material_summary }}
+                                </div>
+                              {% else %}
+                                <p style="white-space: pre-wrap;">{{ course.material_summary }}</p>
+                              {% endif %}
+                            {% else %}
+                              <p><em>Summary is not available for this PDF. It might be processing or generation failed.</em></p>
+                            {% endif %}
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                {% endif %}
+                {# --- END SUMMARY BUTTON AND MODAL --- #}
+
+            {% else %}
+                <p class="text-muted"><em>No material uploaded for this course.</em></p>
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <h4>Currently Enrolled Students</h4>
+        {% if course.enrollments.count() > 0 %}
+            <ul class="list-group mb-3">
+                {% for enrollment in course.enrollments|sort(attribute='student.last_name') %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('students.detail', id=enrollment.student.id) }}">
+                                {{ enrollment.student.first_name }} {{ enrollment.student.last_name }}
+                            </a>
+                            <span class="text-muted small d-block d-md-inline">({{ enrollment.student.email }})</span>
+                            <span class="text-muted small d-block">Enrolled: {{ enrollment.enrolled_on.strftime('%Y-%m-%d') }}</span>
+                        </div>
+
+                        <div>
+                            {% if course.user_id == current_user.id %}
+                            <form method="POST" action="{{ url_for('courses.remove_student_enrollment', course_id=course.id, student_id=enrollment.student.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to unenroll {{ enrollment.student.first_name }} {{ enrollment.student.last_name }} from this course?');">
+                                {{ csrf_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-sm btn-warning" title="Unenroll Student">
+                                    <i class="fas fa-user-minus"></i> Unenroll
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted"><em>No students are currently enrolled in this course.</em></p>
+        {% endif %}
+
+        <div class="mt-4">
+             <a class="btn btn-secondary me-2" href="{{ url_for('courses.list') }}">Back to Course List</a>
+             {% if course.user_id == current_user.id %}
+                <a class="btn btn-primary" href="{{ url_for('courses.edit', id=course.id) }}">Edit Course</a>
+             {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <h4>Add Students to Course</h4>
+        {% if all_students %}
+            {% set students_to_add = [] %}
+            {% for student in all_students %}
+                {% if student.id not in enrolled_student_ids %}
+                    {% set _ = students_to_add.append(student) %}
+                {% endif %}
+            {% endfor %}
+
+            {% if students_to_add %}
+                <ul class="list-group">
+                    {% for student in students_to_add %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('students.detail', id=student.id) }}" title="View student profile">
+                                    {{ student.first_name }} {{ student.last_name }}
+                                </a>
+                                <span class="text-muted small">({{ student.email }})</span>
+                            </div>
+                            {% if course.user_id == current_user.id %}
+                            <form method="POST" action="{{ url_for('courses.add_student_enrollment', course_id=course.id, student_id=student.id) }}" class="d-inline">
+                                {{ csrf_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-sm btn-success" title="Enroll {{ student.first_name }} in {{ course.title }}">
+                                    <i class="fas fa-plus"></i> Enroll
+                                </button>
+                            </form>
+                            {% else %}
+                                <p class="m-auto"> You have no such rights! </p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                 <p class="text-muted fst-italic mt-2">All available students are already enrolled in this course.</p>
+            {% endif %}
+        {% else %}
+            <p class="text-muted fst-italic">No students found in the system. <a href="{{ url_for('students.add') }}">Add a student?</a></p>
+        {% endif %}
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+{% endblock %}

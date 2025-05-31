@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Courses</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Start</th>
+            <th>Material</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in courses %}
+        <tr>
+            <td><a href="{{ url_for('courses.detail', id=c.id) }}">{{ c.title }}</a></td>
+            <td>{{ c.start_date }}</td>
+            <td>
+                {% if c.material_path %}
+                    {% set file_url = url_for('uploaded_file', filename=c.material_path) %}
+                    {% if c.material_path.lower().endswith(('.pdf', '.txt')) %}
+                        <a href="{{ file_url }}" target="_blank">View Document</a>
+                    {% elif c.material_path.lower().endswith('.mp3') %}
+                        <audio controls src="{{ file_url }}"></audio>
+                    {% elif c.material_path.lower().endswith('.mp4') %}
+                        <video controls width="320" src="{{ file_url }}"></video>
+                    {% else %}
+                        <a href="{{ file_url }}">Download {{ c.material_path }}</a>
+                    {% endif %}
+                {% else %}
+                    No Material
+                {% endif %}
+            </td>
+            <td>
+                {% if c.user_id == current_user.id %}
+                    <a class="btn btn-sm btn-secondary" href="{{ url_for('courses.edit', id=c.id) }}">Edit</a>
+                    <form class="d-inline" method="post" action="{{ url_for('courses.delete', id=c.id) }}">
+                        {{ csrf_form.hidden_tag() }}
+                        <button class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a class="btn btn-success mb-2" href="{{ url_for('courses.add') }}">Add</a>
+{% endblock %}
