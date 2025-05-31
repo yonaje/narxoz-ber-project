@@ -1,0 +1,40 @@
+
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <div class="dashboard-container text-center">
+
+    <h2 class="mb-4">Dashboard</h2> 
+    <p class="lead mb-5">Manage students and courses from here.</p> 
+
+    <div class="row justify-content-center g-4"> 
+
+      <div class="col-md-5 col-lg-4"> 
+        <div class="card h-100 shadow-sm"> 
+          <div class="card-body d-flex flex-column align-items-center justify-content-center"> 
+            
+             <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+             <h5 class="card-title">Students</h5>
+             <p class="card-text text-muted small">View, add, edit, and manage student records and enrollments.</p>
+             <a href="{{ url_for('students.list') }}" class="btn btn-primary mt-auto">Go to Students</a> 
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4 col-lg-4"> 
+        <div class="card h-100 shadow-sm">
+           <div class="card-body d-flex flex-column align-items-center justify-content-center">
+             <i class="fas fa-book-open fa-3x text-success mb-3"></i>
+            <h5 class="card-title">Courses</h5>
+            <p class="card-text text-muted small">View, add, edit, manage course details, materials, and enroll students.</p>
+            <a href="{{ url_for('courses.list') }}" class="btn btn-success mt-auto">Go to Courses</a>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+  </div> 
+{% endblock %}
