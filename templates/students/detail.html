@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Student: {{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-7">
+        <h3>{{ student.first_name }} {{ student.last_name }}</h3>
+        <p><i class="fas fa-envelope me-2 text-muted"></i>{{ student.email }}</p>
+        <hr>
+        <h4>Currently Enrolled Courses</h4>
+        {% if student.enrollments.count() > 0 %}
+            <ul class="list-group mb-3">
+                {% for enrollment in student.enrollments|sort(attribute='course.title') %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('courses.detail', id=enrollment.course.id) }}">
+                                {{ enrollment.course.title }}
+                            </a>
+                            <span class="text-muted small">
+                                (Starts: {{ enrollment.course.start_date.strftime('%Y-%m-%d') if enrollment.course.start_date else 'N/A' }})
+                            </span>
+                        </div>
+                         <span class="text-muted small">Enrolled: {{ enrollment.enrolled_on.strftime('%Y-%m-%d') }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p><em>This student is not currently enrolled in any courses.</em></p>
+        {% endif %}
+        <div class="mt-4">
+             <a class="btn btn-secondary me-2" href="{{ url_for('students.list') }}">Back to Student List</a>
+             <a class="btn btn-primary" href="{{ url_for('students.edit', id=student.id) }}">Edit Student</a>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <h4>Enroll in Available Courses</h4>
+
+        {% set courses_to_enroll = [] %}
+        {% for course in all_courses %}
+            {% if course.id not in enrolled_course_ids %}
+                {% set _ = courses_to_enroll.append(course) %}
+            {% endif %}
+        {% endfor %}
+
+        {% if courses_to_enroll %}
+            <ul class="list-group">
+                {% for course in courses_to_enroll %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('courses.detail', id=course.id) }}" title="View course details">
+                                {{ course.title }}
+                            </a>
+                            <span class="text-muted small">
+                                (Starts: {{ course.start_date.strftime('%Y-%m-%d') if course.start_date else 'N/A' }})
+                            </span>
+                        </div>
+                        {% if course.user_id == current_user.id %}
+                            <form method="POST" action="{{ url_for('students.enroll_in_course', student_id=student.id, course_id=course.id) }}" class="d-inline">
+                                {{ csrf_form.hidden_tag() }}
+                                <button type="submit" class="btn btn-sm btn-success" title="Enroll {{ student.first_name }} in {{ course.title }}">
+                                    <i class="fas fa-plus"></i> Enroll
+                                </button>
+                            </form>
+                        {% else %}
+                            <p class="m-auto"> You have no such rights! </p>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted fst-italic mt-2">
+                This student is already enrolled in all available courses, or no courses currently exist in the system.
+            </p>
+             {% if not all_courses %}
+                <p><a href="{{ url_for('courses.add') }}">Add a course?</a></p>
+             {% endif %}
+        {% endif %}
+    </div>
+
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+{% endblock %}
